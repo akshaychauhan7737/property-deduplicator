@@ -17,38 +17,61 @@ export default function Home() {
   const [inputText, setInputText] = useState<string>('');
   const [properties, setProperties] = useState<Property[]>([]);
   const [formattedOutput, setFormattedOutput] = useState<string>('');
+  const [invalidLineNumbers, setInvalidLineNumbers] = useState<number[]>([]); // State for invalid lines
   const { toast } = useToast();
 
   const handleParse = () => {
-    const lines = inputText.split('\n').filter(line => line.trim() !== '');
+    const lines = inputText.split('\n'); // Don't filter empty lines yet, need original indices
     const propsMap = new Map<string, string>();
+    const invalidLines: number[] = [];
 
-    lines.forEach(line => {
+    lines.forEach((line, index) => {
+      const lineNumber = index + 1;
+      const trimmedLine = line.trim();
+
+      if (trimmedLine === '') {
+        // Ignore empty lines, they are not invalid in the sense of format
+        return;
+      }
+
       // Find the first '=' separator
       const separatorIndex = line.indexOf('=');
       if (separatorIndex !== -1) {
         const key = line.substring(0, separatorIndex).trim();
-        // Allow empty value, but key must exist
-        const value = line.substring(separatorIndex + 1).trim();
+        const value = line.substring(separatorIndex + 1).trim(); // Allow empty value
         if (key) { // Ensure key is not empty
           propsMap.set(key, value);
+        } else {
+          // Invalid: '=' present but key is empty
+          invalidLines.push(lineNumber);
         }
+      } else {
+         // Invalid: No '=' separator found and line is not empty
+         invalidLines.push(lineNumber);
       }
     });
+
+    setInvalidLineNumbers(invalidLines);
 
     const parsedProps = Array.from(propsMap, ([key, value]) => ({ key, value }));
     setProperties(parsedProps); // Store parsed key-value pairs
 
-    // Create formatted output string
+    // Create formatted output string from valid properties
     const outputString = parsedProps.map(prop => `${prop.key}=${prop.value}`).join('\n');
     setFormattedOutput(outputString); // Set the state for the output section
 
-    if (parsedProps.length > 0) {
+    if (invalidLines.length > 0) {
+         toast({
+            title: "Warning",
+            description: `Found ${invalidLines.length} line(s) with invalid format (highlighted in red). Only valid lines processed.`,
+            variant: "destructive", // Use destructive variant for warnings/errors
+         });
+    } else if (parsedProps.length > 0) {
         toast({
             title: "Success",
             description: `Parsed ${parsedProps.length} unique properties.`,
         });
-    } else if (lines.length > 0) {
+    } else if (lines.some(line => line.trim() !== '')) { // Check if there was non-empty input
         toast({
             title: "Info",
             description: "No valid key-value pairs found.",
@@ -67,6 +90,7 @@ export default function Home() {
     setInputText('');
     setProperties([]);
     setFormattedOutput(''); // Clear formatted output
+    setInvalidLineNumbers([]); // Clear invalid lines
     toast({
         title: "Cleared",
         description: "Input and output cleared.",
@@ -91,23 +115,32 @@ export default function Home() {
       });
   };
 
+   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(event.target.value);
+    // Optionally clear highlights when user types, or keep them until next parse
+    if (invalidLineNumbers.length > 0) {
+      setInvalidLineNumbers([]); // Clear highlights on input change
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-6 md:p-12 lg:p-24 bg-background">
       <Card className="w-full max-w-3xl bg-card shadow-lg rounded-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-primary">Property Parser</CardTitle>
           <CardDescription className="text-center text-muted-foreground">
-            Paste your key-value pairs (separated by '='). Duplicates will use the last value found. Empty values are allowed.
+            Paste key-value pairs (key=value). Invalid lines highlighted. Duplicates use last value.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-           {/* Replace Textarea with LineNumberedTextarea */}
+           {/* Pass invalidLineNumbers to LineNumberedTextarea */}
           <LineNumberedTextarea
-            placeholder="e.g., name=John Doe&#10;age=30&#10;city=New York&#10;name=Jane Doe&#10;status="
+            placeholder="e.g., name=John Doe&#10;age=30&#10;invalid-line&#10;city=New York&#10;name=Jane Doe&#10;status=&#10;=emptykey"
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={handleInputChange} // Use the new handler
             className="min-h-[150px] text-sm resize-y bg-secondary/50 font-mono"
-            textareaClassName="bg-secondary/50 font-mono" // Pass specific class to inner textarea if needed
+            textareaClassName="bg-secondary/50 font-mono"
+            invalidLines={invalidLineNumbers} // Pass the invalid line numbers
           />
           <div className="flex justify-end space-x-2">
              <Button onClick={handleClear} variant="outline">
