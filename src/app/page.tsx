@@ -3,10 +3,10 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Play, Trash2, Copy } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { LineNumberedTextarea } from '@/components/line-numbered-textarea'; // Import the new component
 
 interface Property {
   key: string;
@@ -16,7 +16,7 @@ interface Property {
 export default function Home() {
   const [inputText, setInputText] = useState<string>('');
   const [properties, setProperties] = useState<Property[]>([]);
-  const [formattedOutput, setFormattedOutput] = useState<string>(''); // State for formatted output string
+  const [formattedOutput, setFormattedOutput] = useState<string>('');
   const { toast } = useToast();
 
   const handleParse = () => {
@@ -41,7 +41,7 @@ export default function Home() {
 
     // Create formatted output string
     const outputString = parsedProps.map(prop => `${prop.key}=${prop.value}`).join('\n');
-    setFormattedOutput(outputString);
+    setFormattedOutput(outputString); // Set the state for the output section
 
     if (parsedProps.length > 0) {
         toast({
@@ -101,11 +101,13 @@ export default function Home() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Textarea
+           {/* Replace Textarea with LineNumberedTextarea */}
+          <LineNumberedTextarea
             placeholder="e.g., name=John Doe&#10;age=30&#10;city=New York&#10;name=Jane Doe&#10;status="
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="min-h-[150px] text-sm resize-y bg-secondary/50 font-mono" // Added font-mono for consistency
+            className="min-h-[150px] text-sm resize-y bg-secondary/50 font-mono"
+            textareaClassName="bg-secondary/50 font-mono" // Pass specific class to inner textarea if needed
           />
           <div className="flex justify-end space-x-2">
              <Button onClick={handleClear} variant="outline">
@@ -116,7 +118,8 @@ export default function Home() {
             </Button>
           </div>
         </CardContent>
-        {properties.length > 0 && (
+        {/* Keep output section as before */}
+        {formattedOutput && (
           <CardFooter className="flex flex-col items-start">
              <div className="w-full flex justify-between items-center mb-2">
                  <h3 className="text-lg font-semibold text-foreground">Parsed Properties:</h3>
@@ -125,7 +128,6 @@ export default function Home() {
                     size="sm"
                     onClick={() => handleCopyToClipboard(formattedOutput)}
                     aria-label="Copy output"
-                    disabled={!formattedOutput}
                   >
                      <Copy className="mr-2 h-4 w-4" /> Copy Output
                   </Button>
