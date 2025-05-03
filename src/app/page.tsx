@@ -2,9 +2,10 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link'; // Import Link for navigation
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Trash2, Copy } from 'lucide-react';
+import { Play, Trash2, Copy, ArrowLeft } from 'lucide-react'; // Add ArrowLeft icon
 import { useToast } from "@/hooks/use-toast";
 import { LineNumberedTextarea } from '@/components/line-numbered-textarea'; // Import the new component
 
@@ -125,9 +126,19 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-6 md:p-12 lg:p-24 bg-background">
+      {/* Back Button */}
+      <div className="w-full max-w-3xl mb-4">
+         <Button asChild variant="outline" size="sm">
+            <Link href="https://devtoolsforfree.com/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to DevToolsForFree
+            </Link>
+          </Button>
+      </div>
+
       <Card className="w-full max-w-3xl bg-card shadow-lg rounded-lg">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center text-primary">Property Parser</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center text-primary">Property Deduplicator</CardTitle>
           <CardDescription className="text-center text-muted-foreground">
             Paste key-value pairs (key=value). Invalid lines highlighted. Duplicates use last value.
           </CardDescription>
